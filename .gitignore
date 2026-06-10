@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Environments and local secrets
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+env/
+
+# Editors and OS files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Large research assets
+data/**
+!data/
+!data/**/
+!data/**/.gitkeep
+!data/README.md
+
+checkpoints/**
+!checkpoints/
+!checkpoints/**/
+!checkpoints/**/.gitkeep
+!checkpoints/README.md
+
+outputs/**
+!outputs/
+!outputs/**/
+!outputs/**/.gitkeep
+!outputs/README.md
+
+third_party/RLVR-World/**
+!third_party/RLVR-World/
+!third_party/RLVR-World/.gitkeep
+
+# Experiment artifacts
+wandb/
+mlruns/
+*.log
+*.ckpt
+*.pt
+*.pth
+*.safetensors
+*.npy
+*.npz
+*.mp4
+*.avi
+*.webm
+*.png
+*.jpg
+*.jpeg
+*.pkl
+*.pickle
+
