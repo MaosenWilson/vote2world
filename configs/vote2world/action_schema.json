@@ -1,6 +1,6 @@
 {
   "dataset_name": "fractal20220817_data",
-  "schema_status": "provisional",
+  "schema_status": "confirmed",
   "schema_version": 1,
   "action_dim": 13,
   "flatten_key_order": [
@@ -97,13 +97,7 @@
     "gen_output_length": 321
   },
   "evidence": {
-    "status_reason": "Based on parsed TFDS features.json and TFRecord sample; official oxe_data_converter.py has not yet been run with TFDS in this environment.",
-    "sources": [
-      "reports/rt1_input_audit/rt1_action_schema.md",
-      "reports/rt1_input_audit/rt1_tfrecord_audit.json",
-      "third_party/RLVR-World/vid_wm/oxe_data_converter.py",
-      "third_party/RLVR-World/vid_wm/ivideogpt/ivideogpt/processor.py"
-    ],
-    "generated_at": "2026-06-10"
+    "status_reason": "Confirmed from converted npz action shape at data/processed/fractal20220817_data/train_eps_00000000.npz; key order follows official converter metadata.",
+    "generated_at": "2026-06-11T01:22:05.547582+00:00"
   }
 }

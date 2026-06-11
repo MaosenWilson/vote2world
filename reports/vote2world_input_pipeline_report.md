@@ -2,18 +2,18 @@
 
 ## Schema
 
-- schema status: `provisional`
+- schema status: `confirmed`
 - action dim: `13`
 - action schema file: `configs/vote2world/action_schema.json`
 
 ## Dataset Validation
 
-- episodes loaded: `1`
-- adaptation windows: `2`
-- evaluation windows: `2`
+- episodes loaded: `5`
+- adaptation windows: `247`
+- evaluation windows: `247`
 - adaptation keys: `['context_actions', 'context_frames', 'episode_id', 'sample_id', 'start_index']`
 - evaluation keys: `['context_actions', 'context_frames', 'episode_id', 'sample_id', 'start_index', 'target_frame']`
-- context_frames shape: `[4, 3, 8, 10]`
+- context_frames shape: `[4, 3, 256, 320]`
 - context_actions shape: `[4, 13]`
 - current frame is `context_frames[-1]`: `True`
 - current action is `context_actions[-1]`: `True`
@@ -36,6 +36,6 @@
 
 ## Blockers
 
-- action_schema.json is still provisional; run official converter/TFDS schema audit to confirm key order.
+- None
 
-READY_FOR_CANDIDATE_SAMPLING = NO
+READY_FOR_CANDIDATE_SAMPLING = YES
