@@ -1,6 +1,6 @@
 import numpy as np
 
-from vote2world.data.window_dataset import AdaptationWindowDataset, EpisodeRef, EvaluationWindowDataset
+from dor.data.window_dataset import AdaptationWindowDataset, EpisodeRef, EvaluationWindowDataset
 
 
 def make_episode(length=6):

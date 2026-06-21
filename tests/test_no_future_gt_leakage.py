@@ -1,9 +1,9 @@
 import numpy as np
 import pytest
 
-from vote2world.data.leakage import FutureGTLeakageError, assert_no_future_gt
-from vote2world.data.window_dataset import AdaptationWindowDataset, EpisodeRef, EvaluationWindowDataset
-from vote2world.processors.adaptation_processor import DummyVisualTokenizer, GenerationOnlyAdaptationProcessor
+from dor.data.leakage import FutureGTLeakageError, assert_no_future_gt
+from dor.data.window_dataset import AdaptationWindowDataset, EpisodeRef, EvaluationWindowDataset
+from dor.processors.adaptation_processor import DummyVisualTokenizer, GenerationOnlyAdaptationProcessor
 
 
 def make_episode():

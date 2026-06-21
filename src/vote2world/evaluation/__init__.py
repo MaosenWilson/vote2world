@@ -1,2 +1,0 @@
-"""Held-out evaluation utilities."""
-

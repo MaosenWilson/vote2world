@@ -1,106 +1,108 @@
-# Vote2World
+# DoR — Dynamics over Reconstruction
 
-Vote2World is a research workspace for **ground-truth-free self-consensus reinforcement learning for action-conditioned visual world models**.
+**Calibrating verifiable rewards for video world models.** (Project handle: `DoR`, formerly `Vote2World`.)
 
-The first target is a minimal publishable setting:
+Video world-model RL post-training (RLVR-World style) scores candidate next-frame
+predictions against a held-out ground-truth frame and turns that score into a GRPO
+reward. The problem: a pixel-space metric like LPIPS is dominated by **tokenizer
+reconstruction noise**, not dynamics — frame-to-frame motion in this setting
+(≈0.040 LPIPS) is *smaller* than the tokenizer's own encode/decode floor
+(≈0.053 LPIPS). The model ends up being rewarded for texture fidelity, not for
+predicting the right motion.
 
-- RT-1-style single-step next-frame prediction.
-- Autoregressive visual world model based on the RLVR-World / iVideoGPT line.
-- No future ground-truth frame access during adaptation.
-- Candidate next-frame sampling, transition-feature neighborhood voting, binary pseudo-reward, group abstention, static-copy filtering, and GRPO post-training.
+**DoR's contribution:** move the verifiable reward out of pixel space and into the
+visual tokenizer's pre-decode code space (FSQ `indices_to_codes`), where there is no
+reconstruction floor to fight. A secondary, demoted contribution (originally the
+project's starting point) reshapes the GRPO advantage with intra-group consensus —
+kept as an ablation, not the headline.
 
-The detailed research plan is in [docs/research/Vote2World_GT_Free_Self_Consensus_RL_Plan.md](docs/research/Vote2World_GT_Free_Self_Consensus_RL_Plan.md).
+## Headline result (2026-06-16, 5 seeds × 40 GRPO steps, RT-1 single-step)
 
-## Current Status
+Code-space reward beats the pixel-LPIPS baseline on all three held-out metrics,
+every seed:
 
-This repository is currently a workspace scaffold. It is prepared for later execution on a rented large-memory GPU server. Local scripts are not expected to run until the upstream RLVR-World code, RT-1 data, tokenizer, and checkpoints are available on the server.
+| metric (step 40) | pixel reward | code reward | paired wins |
+|---|---|---|---|
+| eval LPIPS  | 0.0834 ± 0.0007 | **0.0813 ± 0.0011** | 5/5 |
+| code RMS    | 0.3459 ± 0.0014 | **0.3341 ± 0.0031** | 5/5 |
+| PSNR        | 24.61 ± 0.05    | **24.82 ± 0.11**    | 5/5 |
 
-## Workspace Layout
+Full method and derivation: [docs/DoR_method.md](docs/DoR_method.md). Experiment
+ledger and raw run logs: [docs/experiments/](docs/experiments/).
+
+## Method sketch
+
+Skeleton = RLVR-World (GT-verifiable reward + GRPO). Two independent axes:
+
+1. **Reward distance `D`** — `pixel` (-LPIPS, baseline) / `code` (FSQ code-space
+   RMS, no decode — the DoR contribution) / `hybrid` (z-scored fusion).
+2. **Advantage shaping** — `gt_only` (unmodified GRPO) / `hybrid_add` / `hybrid_mult`
+   (consensus-shaped advantage, ablation; degrades to `gt_only` when β=0, and never
+   lets group consensus override a GT-bad candidate).
+
+Both axes are orthogonal and live in `src/dor/rewards.py` / `src/dor/grpo.py`.
+
+## Repository layout
 
 ```text
-vote2world/
-  docs/
-    research/        Research plan and method notes.
-    engineering/     Engineering runbooks and workspace conventions.
-    experiments/     Experiment plans, result templates, and analysis notes.
-  src/vote2world/
-    rewards/         GT-free consensus reward modules.
-    analysis/        Proxy-quality analysis and diagnostics.
-    data/            Dataset wrappers and no-GT adaptation loaders.
-    models/          Model adapters around upstream visual world models.
-    training/        GRPO / SFT training entry points.
-    evaluation/      Held-out GT evaluation only.
-    utils/           Shared logging, config, and metric helpers.
-  configs/
-    baseline/        Official baseline evaluation configs.
-    analysis/        Candidate cache and proxy-quality configs.
-    grpo/            Smoke-test and full GRPO configs.
-    ablations/       Ablation config variants.
-  scripts/
-    setup/           Server setup and environment checks.
-    download/        Dataset and checkpoint download helpers.
-    run/             Main experiment launchers.
-    analysis/        Offline analysis launchers.
-    server/          Server-specific notes and commands.
-  third_party/
-    RLVR-World/      Placeholder for the upstream RLVR-World checkout.
-  data/              Local or server data mount points. Ignored by git.
-  checkpoints/       Tokenizers and model checkpoints. Ignored by git.
-  outputs/           Logs, reports, visualizations, and caches. Ignored by git.
-  tests/             Unit tests, especially no-GT leakage checks.
+src/dor/             Core package: rewards, GRPO loop, consensus, generation, metrics, tokenization.
+  data/              RT-1 episode loading, window sampling, no-GT adaptation contracts.
+  processors/        Adaptation-side preprocessing.
+scripts/             Entry points: smoke_test / cache_candidates / analyze_consensus / train_grpo,
+                     diagnostic probes (probe_phi_dino, probe_phi_latent, probe_tokenizer_floor),
+                     figures/ (plotting), rt1/ (RT-1 input-pipeline audit & download).
+configs/             YAML configs (grpo, analysis, ablations, baseline).
+tests/               Unit tests, incl. no-future-GT leakage checks.
+docs/
+  DoR_method.md      Canonical method write-up (this is the paper-writing source of truth).
+  experiments/       Experiment ledger (EXPERIMENTS.md) + per-run result logs + template.
+  research/          Earlier research plans (pre-rename, retained for context).
+  engineering/       Workspace conventions.
+  论文写作操作流_SOP.md   Paper-writing tool/skill SOP (nature-skills vs paperspine).
+reports/             RT-1 input-pipeline / action-schema audit reports.
+extended_abstract/   Separate ICICIC 2026 extended-abstract deliverable (multi-level
+                     consistency reward for DIAMOND CS:GO) — independent of the DoR main paper.
+third_party/RLVR-World/   Upstream checkout, git-ignored.
+data/ checkpoints/ outputs/  Git-ignored; live on the training server only.
 ```
 
-## Execution Roadmap
-
-1. Reproduce official RLVR-World RT-1 single-step base and GT-based RLVR evaluation.
-2. Cache 500-1000 adaptation inputs with `K=16` candidate predictions.
-3. Without training, test whether pixel, image-feature, and transition-feature consensus correlate with held-out GT quality.
-4. Implement GT-free binary consensus reward only after transition consensus shows positive proxy value.
-5. Run 20-50 GRPO smoke-test steps and inspect reward ratio, skip rate, KL, entropy, repetition rate, and visual samples.
-6. Add static-copy gate, run main experiments, then run ablations.
-
-## No-GT Adaptation Rule
-
-During self-consensus RL adaptation, future observations must be withheld from the reward path.
-
-Engineering constraints:
-
-- Adaptation dataloaders should return only observation history and current action.
-- Reward modules must not accept `ground_truth`, `future_frame`, or equivalent fields.
-- Held-out GT can be used only by independent evaluation and proxy-quality analysis scripts.
-- Tests should explicitly check that adaptation batches cannot expose future observations.
-
-## Large File Policy
-
-The following paths are intentionally ignored by git:
-
-- `data/`
-- `checkpoints/`
-- `outputs/`
-- `third_party/RLVR-World/`
-
-Keep only lightweight metadata, manifests, config files, and reports in git. Put RT-1 data, generated candidate frames, decoded videos, logs, and checkpoints on the training server or external storage.
-
-## Server Bring-Up Plan
-
-On the GPU server:
-
-1. Clone this repository.
-2. Clone RLVR-World into `third_party/RLVR-World/`.
-3. Install the upstream environment according to RLVR-World first.
-4. Download RT-1 tokenizer, base checkpoint, and GT-based RLVR checkpoint into `checkpoints/`.
-5. Mount or download RT-1 data into `data/rt1/`.
-6. Run official baseline inference and evaluation before adding Vote2World code.
-
-## GitHub Sync
-
-This workspace can be initialized as a git repository immediately, but GitHub sync requires a target remote.
-
-Use one of these:
+## Quickstart (training server)
 
 ```bash
-git remote add origin git@github.com:<owner>/vote2world.git
-git push -u origin main
+pip install -e .
+python scripts/smoke_test.py                 # load + generate + score sanity check
+python scripts/cache_candidates.py --n_windows 200 --K 16
+python scripts/analyze_consensus.py           # Q1 consensus<->GT correlation, Q2 selection
+python scripts/train_grpo.py --rewards pixel,code,hybrid --modes gt_only \
+       --steps 40 --K 16 --seed 0 --out outputs/grpo/curves.json
 ```
 
-or create a new GitHub repository first, then add its remote URL. If this directory is initialized locally before the remote exists, keep the first commit limited to the scaffold and documentation.
+Engineering notes:
+- Blackwell (sm_120) cannot run upstream verl/vllm 0.6.3 — uses HF `.generate()` + a
+  lightweight custom GRPO instead.
+- `src/dor/compat.py` shims `huggingface_hub.cached_download` for diffusers 0.27.
+- Every reward mode starts from the same pre-RL base checkpoint
+  (`thuml/rt1-world-model-single-step-base`) for a fair comparison.
+- Server-internal paths (`configs/vote2world/`, `reports/vote2world_*`, the
+  `/root/autodl-tmp/vote2world` project directory) intentionally still say
+  `vote2world` — renaming them is pure busywork with no payoff, the importable
+  package is `dor`.
+
+## Status
+
+Renamed from `Vote2World` to `DoR` on 2026-06-15 after the tokenizer-floor diagnosis
+above. Target has been raised from an ICICIC 2026 extended abstract to a top-venue
+submission; method is locked, multi-seed robustness for the code-reward result is
+confirmed, next steps are longer training runs, a third (hybrid) arm, and a
+consensus × code-reward interaction ablation — see
+[docs/experiments/EXPERIMENTS.md](docs/experiments/EXPERIMENTS.md).
+
+## References
+
+- Wu, Yin, Feng, Long. *RLVR-World: Training World Models with Reinforcement
+  Learning.* arXiv:2505.13934, 2025.
+- *TTRL: Test-Time Reinforcement Learning.* NeurIPS 2025.
+- *ToolRL: Reward is All Tool Learning Needs.* NeurIPS 2025.
+
+Large-file policy and the full reference list with verified citations live in
+[docs/DoR_method.md](docs/DoR_method.md).

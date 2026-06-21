@@ -1,7 +1,7 @@
 [project]
-name = "vote2world"
-version = "0.1.0"
-description = "GT-free self-consensus RL workspace for action-conditioned visual world models."
+name = "dor"
+version = "0.2.0"
+description = "Consensus-shaped advantage estimation for verifiable world-model RL (RLVR-World + RT-1)."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
@@ -16,4 +16,3 @@ target-version = "py310"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
-

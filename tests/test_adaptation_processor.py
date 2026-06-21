@@ -1,6 +1,6 @@
 import numpy as np
 
-from vote2world.processors.adaptation_processor import (
+from dor.processors.adaptation_processor import (
     DummyVisualTokenizer,
     GenerationOnlyAdaptationProcessor,
     ProcessorConfig,

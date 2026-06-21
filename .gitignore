@@ -21,6 +21,13 @@ env/
 .idea/
 .vscode/
 *.swp
+.$*.bkp
+~$*
+
+# Local Claude Code tooling (not part of the research repo)
+.claude/
+.agents/
+skills-lock.json
 
 # Large research assets
 data/**
@@ -63,4 +70,7 @@ mlruns/
 *.jpeg
 *.pkl
 *.pickle
+
+# Extended abstract deliverable: keep despite the generic doc/image ignores above
+!extended_abstract/**
 

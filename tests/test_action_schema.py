@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from vote2world.data.action_schema import ActionSchema, ActionSchemaError, write_schema_safely
+from dor.data.action_schema import ActionSchema, ActionSchemaError, write_schema_safely
 
 
 def test_action_schema_covers_13_dims():
